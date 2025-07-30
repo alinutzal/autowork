@@ -52,6 +52,8 @@ fi
 # parse the input json file.
 SOURCE_DIR=$(jq -r '.source_dir' "$INPUT_FILE")
 REPO_URL=$(jq -r '.repo_url' "$INPUT_FILE")
+REPO_TAG=$(jq -r '.branch_name' "$INPUT_FILE")
+BRANCH_NAME=$(jq -r '.branch_name' "$INPUT_FILE")
 
 JOB_NAME="triton_job"
 
@@ -59,6 +61,8 @@ echo "Start Triton Server for validation"
 echo "SOURCE_DIR: $SOURCE_DIR"
 echo "OUTPUT: $OUTPUT"
 echo "REPO_URL: $REPO_URL"
+echo "REPO_TAG: $REPO_TAG"
+echo "BRANCH_NAME: $BRANCH_NAME"
 echo "SOURCE_DIR: $SOURCE_DIR"
 echo "JOB Name: ${JOB_NAME}"
 
@@ -70,6 +74,7 @@ REPO_NAME=$(basename "$REPO_URL" .git)
 if [[ ! -d "$REPO_NAME" ]]; then
   echo "Cloning repository $REPO_URL into $SOURCE_DIR"
   git clone "$REPO_URL" "$REPO_NAME"
+  git -C "$REPO_NAME" checkout "$BRANCH_NAME" || { echo "Failed to checkout branch $BRANCH_NAME"; exit 1; }
 fi
 cd "$REPO_NAME" || { echo "Failed to change directory to $REPO_NAME"; exit 1; }
 

@@ -2,7 +2,7 @@ athena_dev_container: "docexoty/alma9-atlasos-dev:latest"
 athena_dev_gpu_container: "beojan/mpicuda9-2:latest"
 ml_container: "docexoty/exatrkx:cuda12-pytorch2.6"
 max_evts: 1
-nersc_project_name: "m3443"
-gitlab_username: "xju"
+nersc_project_name: "m4439"
+gitlab_username: "allazar"
 
 samples: ["MuonPU0", "ElectronPU0", "PionPU0"]

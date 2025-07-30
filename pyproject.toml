@@ -173,3 +173,10 @@ select = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "config",
+  "workflow",
+  "projects",
+]

@@ -188,3 +188,18 @@ rule compare_two_tracking_chain:
         """workflow/scripts/compare_ckf_gnn.sh -i "{input}" \
         -o "{output}" > "{log}" 2>&1 \
         """
+
+rule compare_two_gnn4itk_models:
+    input:
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkML.{triton_dev_name_1}.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkML.{triton_dev_name_2}.{dataset}.root",
+    output:
+        "results/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{triton_dev_name_1}.vs.{triton_dev_name_2}.{dataset}.txt",
+    log:
+        "logs/tracking/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{triton_dev_name_1}_vs_{triton_dev_name_2}.{dataset}.log",
+    conda:
+        "../envs/vroot.yaml"
+    shell:
+        """workflow/scripts/compare_ckf_gnn.sh -i "{input}" \
+        -o "{output}" > "{log}" 2>&1 \
+        """
