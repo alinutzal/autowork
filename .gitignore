@@ -178,3 +178,11 @@ cython_debug/
 *workarea*
 *asetup.save
 run_vroot.log
+*.log
+*.out
+*.done
+*workarea*
+*asetup.save
+results/
+logs/*
+*.txt

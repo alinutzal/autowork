@@ -1,5 +1,5 @@
 {
-  "source_dir": "/pscratch/sd/x/xju/athena_dev/20250507_gnn4itk_triton",
-  "release": "Athena,25.0.30,here",
+  "source_dir": "/pscratch/sd/a/alazar/athena_dev/20250725_debugTriton",
+  "release": "Athena,25.0.38,here",
   "local_setup": "sparse_build/x86_64-el9-gcc*-opt/setup.sh"
 }

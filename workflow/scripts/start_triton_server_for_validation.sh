@@ -4,10 +4,14 @@ INPUT_FILE=""
 OUTPUT=""
 
 # Parse arguments
-while getopts "i:o:" opt; do
+PARTITION="${NERSC_PARTITION:-interactive}"
+TIME="${NERSC_TIME:-4:00:00}"
+while getopts "i:o:q:t:" opt; do
   case $opt in
     i) INPUT_FILE="$OPTARG" ;;
     o) OUTPUT="$OPTARG" ;;
+    q) PARTITION="$OPTARG" ;;
+    t) TIME="$OPTARG" ;;
     *) echo "Invalid option: -$OPTARG" >&2; exit 1 ;;
   esac
 done
@@ -33,39 +37,30 @@ if [[ ! -f "$INPUT_FILE" ]]; then
   exit 1
 fi
 
-# Check if the output file exists
-if [[ -f "$OUTPUT" ]]; then
-  echo "Output file $OUTPUT already exists."
-  # now check if the Triton server is runnning.
-  TritonServerName=`cat $OUPUT`
-  curl -v ${TritonServerName}:8000/v2/health/ready
-  if [[ $? -ne 0 ]]; then
-    echo "Triton server is not running."
-    echo "remove the $OUTPUT file and launch the server"
-    rm -f $OUTPUT
-  else
-    echo "Triton server is running. Exiting."
-    exit 0
-  fi
-fi
-
 # parse the input json file.
 SOURCE_DIR=$(jq -r '.source_dir' "$INPUT_FILE")
 REPO_URL=$(jq -r '.repo_url' "$INPUT_FILE")
-REPO_TAG=$(jq -r '.branch_name' "$INPUT_FILE")
-BRANCH_NAME=$(jq -r '.branch_name' "$INPUT_FILE")
-
+REPO_TAG=$(jq -r '.repo_tag // empty' "$INPUT_FILE")
+CONFIG_PBTXT_PATH=$(jq -r '.config_pbtxt_path // empty' "$INPUT_FILE")
+MODEL_NAME=$(jq -r '.model_name // empty' "$INPUT_FILE")
+# Optional Triton server startup flags (e.g. "--model-control-mode=explicit --repository-poll-seconds=30")
+TRITON_START_FLAGS=$(jq -r '.triton_start_flags // empty' "$INPUT_FILE")
+PARTITION=$(jq -r '.partition // empty' "$INPUT_FILE")
+TIME=$(jq -r '.time // empty' "$INPUT_FILE")
 JOB_NAME="triton_job"
 
 echo "Start Triton Server for validation"
 echo "SOURCE_DIR: $SOURCE_DIR"
 echo "OUTPUT: $OUTPUT"
 echo "REPO_URL: $REPO_URL"
-echo "REPO_TAG: $REPO_TAG"
-echo "BRANCH_NAME: $BRANCH_NAME"
-echo "SOURCE_DIR: $SOURCE_DIR"
 echo "JOB Name: ${JOB_NAME}"
+echo "CONFIG_PBTXT_PATH: $CONFIG_PBTXT_PATH"
+echo "MODEL_NAME: $MODEL_NAME"
+echo "TRITON_START_FLAGS: $TRITON_START_FLAGS"
+echo "NERSC partition: $PARTITION"
+echo "Requested walltime: $TIME"
 
+mkdir -p "${SOURCE_DIR}"
 
 cd ${SOURCE_DIR} || { echo "Failed to change directory to $SOURCE_DIR"; exit 1; }
 
@@ -73,13 +68,28 @@ REPO_NAME=$(basename "$REPO_URL" .git)
 
 if [[ ! -d "$REPO_NAME" ]]; then
   echo "Cloning repository $REPO_URL into $SOURCE_DIR"
-  git clone "$REPO_URL" "$REPO_NAME"
-  git -C "$REPO_NAME" checkout "$BRANCH_NAME" || { echo "Failed to checkout branch $BRANCH_NAME"; exit 1; }
+  git clone "$REPO_URL"
 fi
 cd "$REPO_NAME" || { echo "Failed to change directory to $REPO_NAME"; exit 1; }
 
-srun --job-name="$JOB_NAME" -C "gpu&hbm80g" -N 1 -G 1 -c 10 -n 1 -t 4:00:00 -A m3443 \
-  -q interactive /bin/bash -c "./scripts/start-tritonserver.sh -o $OUTPUT " &
+if [[ -n "$REPO_TAG" ]]; then
+  git checkout "$REPO_TAG"
+fi
+
+# If a custom config.pbtxt is provided, copy it to the model directory
+if [[ -n "$CONFIG_PBTXT_PATH" && -n "$MODEL_NAME" ]]; then
+  if [[ -f "$CONFIG_PBTXT_PATH" ]]; then
+    MODEL_CONFIG_DIR="models/$MODEL_NAME"
+    mkdir -p "$MODEL_CONFIG_DIR"
+    echo "Copying custom config from $CONFIG_PBTXT_PATH to $MODEL_CONFIG_DIR/config.pbtxt"
+    cp "$CONFIG_PBTXT_PATH" "$MODEL_CONFIG_DIR/config.pbtxt"
+  else
+    echo "Warning: Custom config file not found at $CONFIG_PBTXT_PATH"
+  fi
+fi
+
+ srun --job-name="$JOB_NAME" -C "gpu&hbm80g" -N 1 -G 1 -c 10 -n 1 -t "$TIME" -A m4439 \
+  -q "$PARTITION" /bin/bash -c "if [[ -n \"$TRITON_START_FLAGS\" ]]; then ./scripts/start-tritonserver.sh -o \"$OUTPUT\" -- $TRITON_START_FLAGS; else ./scripts/start-tritonserver.sh -o \"$OUTPUT\"; fi" &
 
 SRUN_PID=$!
 
@@ -109,7 +119,7 @@ while true; do
     break
   else
     echo "Current state: $STATE. Waiting..."
-    sleep 2
+    sleep 5
   fi
 done
 

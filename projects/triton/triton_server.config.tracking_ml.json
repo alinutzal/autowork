@@ -4,7 +4,5 @@
     "repo_tag": "alina_ml_pipe",
     "config_pbtxt_path": "/pscratch/sd/a/alazar/autowork/projects/triton/config_track/ml_eager_config.pbtxt",
     "model_name": "MetricLearning",
-    "triton_start_flags": "--model-control-mode=poll --repository-poll-seconds=30",
-    "partition": "regular",
-    "time": "7:00:00"
+    "triton_start_flags": "--model-control-mode=poll --repository-poll-seconds=30"
 }

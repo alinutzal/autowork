@@ -108,6 +108,10 @@ gnn4itk_config_map = {
         "model_name": "MetricLearning",
         "chain_name": "GNN4ITk_ML_TRITON",
     },
+    "gnn4itkMM": {
+        "model_name": "ModuleMap",
+        "chain_name": "GNN4ITk_ML_TRITON",
+    },
     "gnn4pixel": {
         "model_name": "GNN4Pixel",
         "chain_name": "GNN4Pixel_ML_TRITON",
@@ -181,7 +185,7 @@ rule compare_two_tracking_chain:
     output:
         "results/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{dataset}.txt",
     log:
-        "logs/tracking/${trk_study_tag}/idpvm.comparison.{idpvm_mode}.{dataset}.log",
+        "logs/tracking/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{dataset}.log",
     conda:
         "../envs/vroot.yaml"
     shell:
@@ -191,8 +195,8 @@ rule compare_two_tracking_chain:
 
 rule compare_two_gnn4itk_models:
     input:
-        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkML.{triton_dev_name_1}.{dataset}.root",
-        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkML.{triton_dev_name_2}.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_1}.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkMM.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_2}.{dataset}.root",
     output:
         "results/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{triton_dev_name_1}.vs.{triton_dev_name_2}.{dataset}.txt",
     log:

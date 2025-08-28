@@ -4,12 +4,16 @@ rule start_triton_server_for_validation:
     output:
         "results/triton/triton_server.{triton_dev_name}.ready.txt"
     threads: 2
+    params:
+        partition = config.get("triton_partition", "interactive"),
+        time = config.get("triton_time", "4:00:00"),
     log:
         "logs/triton/triton_server.{triton_dev_name}.log"
     shell:
         """workflow/scripts/start_triton_server_for_validation.sh \
         -i {input} \
-        -o "{output}" > "{log}" 2>&1
+        -o "{output}" \
+        -q {params.partition} -t {params.time} > "{log}" 2>&1
         """
 
 rule validate_triton_client:

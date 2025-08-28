@@ -39,7 +39,8 @@ do
     INPUT_FILES[$idx]=$IN_FILE
     echo "Input File $idx: ${INPUT_FILES[$idx]}"
 done
-
+conda config --show channel_priority 2>/dev/null || echo 'channel_priority: <not set>'
+conda config --set channel_priority strict || true ; conda config --show channel_priority
 # check if run_vroot is available
 # in the external_packages directory.
 if [ ! -d "external_packages/root_plot_utils" ] || [ -z "$(which run_vroot)" ]; then
@@ -56,7 +57,12 @@ echo "run_vroot path: $(which run_vroot)"
 
 sampleName=$(basename "${INPUT_FILES[0]}" | awk -F. '{print $7}')
 IDPVM_MODE=$(basename "${INPUT_FILES[0]}" | awk -F. '{print $3}')
-OUTDIR=$(dirname "${INPUT_FILES[0]}")/comparison
+tag_1=$(basename "${INPUT_FILES[0]}" | awk -F. '{print $6}')
+tag_1="${tag_1##*_}"
+tag_2=$(basename "${INPUT_FILES[1]}" | awk -F. '{print $6}')
+tag_2="${tag_2##*_}"
+
+OUTDIR=$(dirname "${INPUT_FILES[0]}")/comparison_"$sampleName"_"$IDPVM_MODE"_"$tag_1"_"$tag_2"
 mkdir -p "$OUTDIR"
 
 echo "Sample Name: $sampleName"
@@ -67,6 +73,7 @@ declare -A sampleLabels
 sampleLabels=(
     ["ttbarPU0"]="t#bar{t}, <#mu> = 0"
     ["ttbar"]="t#bar{t}, <#mu> = 200"
+    ["ttbarEFT"]="t#bar{t}, <#mu> = 200"
     ["ZmumuPU0"]="Z#rightarrow#mu#mu, <#mu> = 0"
     ["ZmumuPU200"]="Z#rightarrow#mu#mu, <#mu> = 200"
     ["MuonPU0"]="#mu, <#mu> = 0"
@@ -78,10 +85,11 @@ sampleLabels=(
 COMMAND_OPTS=(
     task_name=gnn4itk
     task=compare_two_files
+    task.with_ratio=true \
     task.reference_file.path="${INPUT_FILES[0]}"
-    task.reference_file.name=main
+    task.reference_file.name="${tag_1}"
     task.comparator_file.path="${INPUT_FILES[1]}"
-    task.comparator_file.name="GNN w/ Metric Learning"
+    task.comparator_file.name="${tag_2}"
     "histograms=glob(rel24_idpvm*)"
     "canvas.other_label.text='#sqrt{s} = 14 TeV, ${sampleLabels[${sampleName}]}, HS'"
     canvas.otypes=png,pdf

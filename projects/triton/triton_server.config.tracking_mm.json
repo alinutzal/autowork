@@ -2,9 +2,10 @@
     "source_dir": "/pscratch/sd/a/alazar/ITk/tracking",
     "repo_url": "git@github.com:xju2/tracking-as-a-service.git",
     "repo_tag": "alina_ml_pipe",
-    "config_pbtxt_path": "/pscratch/sd/a/alazar/autowork/projects/triton/config_track/ml_eager_config.pbtxt",
-    "model_name": "MetricLearning",
+    "config_pbtxt_path": "/pscratch/sd/a/alazar/autowork/projects/triton/config_track/mm_eager_config.pbtxt",
+    "model_name": "ModuleMap",
     "triton_start_flags": "--model-control-mode=poll --repository-poll-seconds=30",
-    "partition": "regular",
-    "time": "7:00:00"
+    "partition": "interactive",
+    "time": "4:00:00"
+
 }
