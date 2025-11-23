@@ -3,7 +3,7 @@ rule run_legacy_ckf:
         "results/athena/athena.default.{ath_dev_name}.built.json",
         "projects/tracking/rdo_files.{dataset}.txt",
     output:
-        "workarea/{trk_study_tag}/{dataset}/aod.ckf.local.{ath_dev_name}.none.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/aod.ckf.local.{ath_dev_name}.ckf.{dataset}.root",
     log:
         "logs/tracking/{trk_study_tag}/legacy_ckf.{ath_dev_name}.{dataset}.log",
     params:
@@ -26,7 +26,7 @@ rule run_legacy_ckf_lrt:
         "results/athena/athena.default.{ath_dev_name}.built.json",
         "projects/tracking/rdo_files.{dataset}.txt",
     output:
-        "workarea/{trk_study_tag}/{dataset}/aod.ckfLRT.local.{ath_dev_name}.none.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/aod.ckfLRT.local.{ath_dev_name}.ckf.{dataset}.root",
     log:
         "logs/tracking/{trk_study_tag}/LRT-legacy_ckf.{ath_dev_name}.{dataset}.log",
     params:
@@ -103,9 +103,28 @@ rule run_gnn4itk_local_external:
         -o "{output}" > "{log}" 2>&1 \
         """
 
+# Prefer the CKF+two-GNNs compare rule when multiple compare rules match
+ruleorder: compare_ckf_two_gnn4itk_models > compare_two_gnn4itk_models
+
+datasets = ["ttbar"]
+
 gnn4itk_config_map = {
+    "gnn4itkMLeager": {
+        "config_name": "eager",
+        "model_name": "MetricLearning",
+        "chain_name": "GNN4ITk_ML_TRITON",
+    },
+    "gnn4itkMLamptc": {
+        "config_name": "amptc",
+        "model_name": "MetricLearning",
+        "chain_name": "GNN4ITk_ML_TRITON",
+    },
     "gnn4itkML": {
         "model_name": "MetricLearning",
+        "chain_name": "GNN4ITk_ML_TRITON",
+    },
+    "gnn4itkDML": {
+        "model_name": "DoubleMetricLearning",
         "chain_name": "GNN4ITk_ML_TRITON",
     },
     "gnn4itkMM": {
@@ -138,8 +157,10 @@ rule run_gnn4itk_triton:
     params:
         max_evts = config.get("max_evts", 1),
         container_name = config["athena_dev_gpu_container"],
-        model_name = lambda wildcards: gnn4itk_config_map[wildcards.trk_chain_name]["model_name"],
-        chain_name = lambda wildcards: gnn4itk_config_map[wildcards.trk_chain_name]["chain_name"],
+        # Allow trk_chain_name to include suffixes (e.g. 'gnn4itkML.primary')
+        # by taking the base key before the first '.' when looking up the config map.
+        model_name = lambda wildcards: gnn4itk_config_map[wildcards.trk_chain_name.split('.', 1)[0]]["model_name"],
+        chain_name = lambda wildcards: gnn4itk_config_map[wildcards.trk_chain_name.split('.', 1)[0]]["chain_name"],
     threads:
         1
     shell:
@@ -149,7 +170,7 @@ rule run_gnn4itk_triton:
         -m {params.max_evts} \
         -c {params.chain_name} \
         -s {input[0]} \
-        -u `cat {input[2]}` \
+        -u "cat {input[2]}" \
         -p {params.model_name} \
         -o "{output}" > "{log}" 2>&1 \
         """
@@ -180,7 +201,7 @@ rule run_idpvm:
 
 rule compare_two_tracking_chain:
     input:
-        "workarea/{trk_study_tag}/{dataset}/idpvm.ckf.{idpvm_mode}.local.gnn4itkTriton.none.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.ckf.{idpvm_mode}.local.gnn4itkTriton.ckf.{dataset}.root",
         "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkTriton.tracking.{dataset}.root",
     output:
         "results/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{dataset}.txt",
@@ -196,11 +217,42 @@ rule compare_two_tracking_chain:
 rule compare_two_gnn4itk_models:
     input:
         "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_1}.{dataset}.root",
-        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkMM.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_2}.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkDML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_2}.{dataset}.root",
     output:
         "results/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{triton_dev_name_1}.vs.{triton_dev_name_2}.{dataset}.txt",
     log:
         "logs/tracking/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{triton_dev_name_1}_vs_{triton_dev_name_2}.{dataset}.log",
+    conda:
+        "../envs/vroot.yaml"
+    shell:
+        """workflow/scripts/compare_ckf_gnn.sh -i "{input}" \
+        -o "{output}" > "{log}" 2>&1 \
+        """
+
+rule compare_two_gnn4itk_configs:
+    input:
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkMLeager.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name}.{dataset}.{config_1}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkMLamptc.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name}.{dataset}.{config_2}.root",
+    output:
+        "results/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{triton_dev_name}.{dataset}.{config_1}.vs.{config_2}.txt",
+    log:
+        "logs/tracking/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{triton_dev_name}.{dataset}.{config_1}.vs.{config_2}.log",
+    conda:
+        "../envs/vroot.yaml"
+    shell:
+        """workflow/scripts/compare_ckf_gnn.sh -i "{input}" \
+        -o "{output}" > "{log}" 2>&1 \
+        """
+
+rule compare_ckf_two_gnn4itk_models:
+    input:
+        "workarea/{trk_study_tag}/{dataset}/idpvm.ckf.{idpvm_mode}.local.gnn4itkTriton.ckf.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_1}.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkDML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_2}.{dataset}.root",
+    output:
+        "results/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.ckf.{triton_dev_name_1}.vs.{triton_dev_name_2}.{dataset}.txt",
+    log:
+        "logs/tracking/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.ckf.{triton_dev_name_1}_vs_{triton_dev_name_2}.{dataset}.log",
     conda:
         "../envs/vroot.yaml"
     shell:

@@ -1,4 +1,4 @@
-name: "MetricLearning"
+name: "DoubleMetricLearning"
 backend: "python"
 
 input [

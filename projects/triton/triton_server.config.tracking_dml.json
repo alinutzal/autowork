@@ -2,8 +2,9 @@
     "source_dir": "/pscratch/sd/a/alazar/ITk/tracking_2",
     "repo_url": "git@github.com:xju2/tracking-as-a-service.git",
     "repo_tag": "v2.1.0",
-    "config_pbtxt_path": "/pscratch/sd/a/alazar/autowork/projects/triton/config_track/ml_eager_config.pbtxt",
-    "model_name": "MetricLearning",
+    "config_pbtxt_path": "/pscratch/sd/a/alazar/autowork/projects/triton/config_track/dml_eager_config.pbtxt",
+    "model_name": "DoubleMetricLearning",
+    "model_version": "2",
     "triton_start_flags": "--model-control-mode=poll --repository-poll-seconds=30",
     "partition": "interactive",
     "time": "4:00:00"

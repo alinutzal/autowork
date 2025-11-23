@@ -62,7 +62,19 @@ tag_1="${tag_1##*_}"
 tag_2=$(basename "${INPUT_FILES[1]}" | awk -F. '{print $6}')
 tag_2="${tag_2##*_}"
 
-OUTDIR=$(dirname "${INPUT_FILES[0]}")/comparison_"$sampleName"_"$IDPVM_MODE"_"$tag_1"_"$tag_2"
+# Optional third input (for CKF vs two GNNs comparisons)
+tag_3=""
+if [[ ${#INPUT_FILES[@]} -ge 3 ]]; then
+    tag_3=$(basename "${INPUT_FILES[2]}" | awk -F. '{print $6}')
+    tag_3="${tag_3##*_}"
+fi
+
+OUTDIR_BASE=$(dirname "${INPUT_FILES[0]}")/comparison_"$sampleName"_"$IDPVM_MODE"
+if [[ -n "$tag_3" ]]; then
+    OUTDIR="${OUTDIR_BASE}_"${tag_1}"_"${tag_2}"_"${tag_3}
+else
+    OUTDIR="${OUTDIR_BASE}_"${tag_1}"_"${tag_2}
+fi
 mkdir -p "$OUTDIR"
 
 echo "Sample Name: $sampleName"
@@ -80,25 +92,45 @@ sampleLabels=(
     ["ElectronPU0"]="e, <#mu> = 0"
     ["PionPU0"]="#pi, <#mu> = 0"
     ["test"]="t#bar{t}, <#mu> = 200"
-)
+    )
 
-COMMAND_OPTS=(
-    task_name=gnn4itk
-    task=compare_two_files
-    task.with_ratio=true \
-    task.reference_file.path="${INPUT_FILES[0]}"
-    task.reference_file.name="${tag_1}"
-    task.comparator_file.path="${INPUT_FILES[1]}"
-    task.comparator_file.name="${tag_2}"
-    "histograms=glob(rel24_idpvm*)"
-    "canvas.other_label.text='#sqrt{s} = 14 TeV, ${sampleLabels[${sampleName}]}, HS'"
-    canvas.otypes=png,pdf
-    task.outdir=${OUTDIR}
-)
-
-echo -e "run_vroot -m \"${COMMAND_OPTS[*]}\""
-
-run_vroot -m "${COMMAND_OPTS[@]}"
+if [[ ${#INPUT_FILES[@]} -ge 3 ]]; then
+    # Three-file comparison: reference + comparator1 + comparator2
+    COMMAND_OPTS=(
+        task_name=gnn4itk
+        task=compare_three_files
+        task.with_ratio=true \
+        task.reference_file.path="${INPUT_FILES[0]}"
+        task.reference_file.name="${tag_1}"
+        task.comparator_file_1.path="${INPUT_FILES[1]}"
+        task.comparator_file_1.name="${tag_2}"
+        task.comparator_file_2.path="${INPUT_FILES[2]}"
+        task.comparator_file_2.name="${tag_3}"
+        "histograms=glob(rel24_idpvm*)"
+        "canvas.other_label.text='#sqrt{s} = 14 TeV, ${sampleLabels[${sampleName}]}, HS'"
+        canvas.otypes=png,pdf
+        task.outdir=${OUTDIR}
+    )
+    echo -e "run_vroot -m \"${COMMAND_OPTS[*]}\""
+    run_vroot -m "${COMMAND_OPTS[@]}"
+else
+    # Two-file comparison (existing behavior)
+    COMMAND_OPTS=(
+        task_name=gnn4itk
+        task=compare_two_files
+        task.with_ratio=true \
+        task.reference_file.path="${INPUT_FILES[0]}"
+        task.reference_file.name="${tag_1}"
+        task.comparator_file.path="${INPUT_FILES[1]}"
+        task.comparator_file.name="${tag_2}"
+        "histograms=glob(rel24_idpvm*)"
+        "canvas.other_label.text='#sqrt{s} = 14 TeV, ${sampleLabels[${sampleName}]}, HS'"
+        canvas.otypes=png,pdf
+        task.outdir=${OUTDIR}
+    )
+    echo -e "run_vroot -m \"${COMMAND_OPTS[*]}\""
+    run_vroot -m "${COMMAND_OPTS[@]}"
+fi
 
 echo "$OUTDIR" > "$OUTFILE"
 echo "DONE $(date +%Y-%m-%dT%H:%M:%S)"
