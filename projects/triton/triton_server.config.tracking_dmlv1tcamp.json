@@ -1,0 +1,14 @@
+{
+  "source_dir": "/pscratch/sd/a/alazar/ITk/tracking_2",
+  "repo_url": "git@github.com:xju2/tracking-as-a-service.git",
+  "repo_tag": "alina_ml_pipe",
+  "config_pbtxt_path": "/pscratch/sd/a/alazar/autowork/projects/triton/config_track/dmlv1_amptc_config.pbtxt",
+  "model_name": "DoubleMetricLearning",
+  "triton_start_flags": "--model-control-mode=poll --repository-poll-seconds=30",
+  "partition": "shared_interactive",
+  "time": "4:00:00",
+  "cpus_per_gpu": 4,
+  "account": "m4439",
+  "constraint": "gpu",
+  "model_version": "1"
+}

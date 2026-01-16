@@ -125,7 +125,7 @@ gnn4itk_config_map = {
     },
     "gnn4itkDML": {
         "model_name": "DoubleMetricLearning",
-        "chain_name": "GNN4ITk_ML_TRITON",
+        "chain_name": "GNN4ITk_DML_TRITON",
     },
     "gnn4itkMM": {
         "model_name": "ModuleMap",
@@ -149,7 +149,7 @@ rule run_gnn4itk_triton:
     input:
         "results/athena/athena.default.{ath_dev_name}.built.json",
         "projects/tracking/rdo_files.{dataset}.txt",
-        ancient("results/triton/triton_server.{triton_dev_name}.ready.txt")
+        ancient("results/triton/triton_server.{triton_dev_name}.ready.json")
     output:
         "workarea/{trk_study_tag}/{dataset}/aod.{trk_chain_name}.triton.{ath_dev_name}.{triton_dev_name}.{dataset}.root"
     log:
@@ -170,7 +170,7 @@ rule run_gnn4itk_triton:
         -m {params.max_evts} \
         -c {params.chain_name} \
         -s {input[0]} \
-        -u "cat {input[2]}" \
+        -u {input[2]} \
         -p {params.model_name} \
         -o "{output}" > "{log}" 2>&1 \
         """
@@ -216,7 +216,7 @@ rule compare_two_tracking_chain:
 
 rule compare_two_gnn4itk_models:
     input:
-        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_1}.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkDML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_1}.{dataset}.root",
         "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkDML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_2}.{dataset}.root",
     output:
         "results/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.{triton_dev_name_1}.vs.{triton_dev_name_2}.{dataset}.txt",
@@ -247,7 +247,7 @@ rule compare_two_gnn4itk_configs:
 rule compare_ckf_two_gnn4itk_models:
     input:
         "workarea/{trk_study_tag}/{dataset}/idpvm.ckf.{idpvm_mode}.local.gnn4itkTriton.ckf.{dataset}.root",
-        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_1}.{dataset}.root",
+        "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkDML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_1}.{dataset}.root",
         "workarea/{trk_study_tag}/{dataset}/idpvm.gnn4itkDML.{idpvm_mode}.triton.gnn4itkTriton.{triton_dev_name_2}.{dataset}.root",
     output:
         "results/{trk_study_tag}/idpvm.comparison.{idpvm_mode}.ckf.{triton_dev_name_1}.vs.{triton_dev_name_2}.{dataset}.txt",

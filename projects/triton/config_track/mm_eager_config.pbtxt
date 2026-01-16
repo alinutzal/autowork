@@ -5,7 +5,7 @@ input [
   {
     name: "FEATURES"
     data_type: TYPE_FP32
-    dims: [ -1, 44 ]
+    dims: [ -1, 16 ]
   }
 ]
 
@@ -41,11 +41,16 @@ parameters: {
 }
 
 parameters: {
-  key: "save_event",
-  value: {string_value: "True"}
+  key: "timing_output_dir",
+  value: { string_value: "/pscratch/sd/a/alazar/autowork/logs/tracking/timing" }
+}
+
+parameters: {
+  key: "timing_output_file",
+  value: { string_value: "DoubleMetricLearning_1_timing.csv" }
 }
 
 parameters: {
   key: "module_map_pattern_path",
-  value: {string_value: "/pscratch/sd/a/alazar/ITk/eager/tracking-as-a-service/models/ModuleMap/1/ModuleMap_rel24_ttbar_v9_89809evts_tol1e-10"}
+  value: {string_value: "ModuleMap_rel24_ttbar_v9_89809evts_tol1e-10"}
 }

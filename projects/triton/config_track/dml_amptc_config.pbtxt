@@ -1,5 +1,9 @@
-name: "MetricLearning"
+name: "DoubleMetricLearning"
 backend: "python"
+
+version_policy: {
+  specific: { versions: [2] }
+}
 
 input [
   {
@@ -31,7 +35,7 @@ parameters: {
 }
 
 parameters: {
-  key: "compling",
+  key: "compiling",
   value: {string_value: "True"}
 }
 
@@ -43,4 +47,14 @@ parameters: {
 parameters: {
   key: "save_event",
   value: {string_value: "False"}
+}
+
+parameters: {
+  key: "timing_output_dir",
+  value: { string_value: "/pscratch/sd/a/alazar/autowork/logs/tracking/timing" }
+}
+
+parameters: {
+  key: "timing_output_file",
+  value: { string_value: "DoubleMetricLearning_1_timing.csv" }
 }

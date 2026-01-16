@@ -2,8 +2,5 @@
     "source_dir": "/pscratch/sd/a/alazar/athena_dev/20250806_mmClient",
     "athena_repository": "ssh://git@gitlab.cern.ch:7999/xju/athena.git",
     "athena_tag": "mm_client",
-    "release": "Athena,main,latest,here",
-    "packages": [
-        "InnerDetector/InDetGNNTracking"
-    ]
+    "release": "Athena,25.0.38,here"
 }
